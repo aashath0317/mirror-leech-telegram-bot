@@ -65,7 +65,7 @@ class YoutubeDLHelper:
                      'allow_playlist_files': True,
                      'overwrites': True,
                      'writethumbnail': True,
-                     'trim_file_name': 220}
+                     'trim_file_name': 230}
 
     @property
     def download_speed(self):
@@ -191,12 +191,18 @@ class YoutubeDLHelper:
             {'add_chapters': True, 'add_infojson': 'if_exists', 'add_metadata': True, 'key': 'FFmpegMetadata'}]
 
         if qual.startswith('ba/b-'):
-            mp3_info = qual.split('-')
-            qual = mp3_info[0]
-            rate = mp3_info[1]
+            audio_info = qual.split('-')
+            qual = audio_info[0]
+            audio_format = audio_info[1]
+            rate = audio_info[2]
             self.opts['postprocessors'].append(
-                {'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': rate})
-            self.__ext = '.mp3'
+                {'key': 'FFmpegExtractAudio', 'preferredcodec': audio_format, 'preferredquality': rate})
+            if audio_format == 'vorbis':
+                self.__ext = '.ogg'
+            elif audio_format == 'alac':
+                self.__ext = '.m4a'
+            else:
+                self.__ext = f'.{audio_format}'
 
         self.opts['format'] = qual
 
@@ -207,17 +213,22 @@ class YoutubeDLHelper:
         if self.__is_cancelled:
             return
 
+        base_name, ext = ospath.splitext(self.name)
+        trim_name = self.name if self.is_playlist else base_name
+        if len(trim_name.encode()) > 200:
+            self.name = self.name[:200] if self.is_playlist else f'{base_name[:200]}{ext}'
+            base_name = ospath.splitext(self.name)[0]
+
         if self.is_playlist:
             self.opts['outtmpl'] = {'default': f"{path}/{self.name}/%(title,fulltitle,alt_title)s%(season_number& |)s%(season_number&S|)s%(season_number|)02d%(episode_number&E|)s%(episode_number|)02d%(height& |)s%(height|)s%(height&p|)s%(fps|)s%(fps&fps|)s%(tbr& |)s%(tbr|)d.%(ext)s",
                                     'thumbnail': f"{path}/yt-dlp-thumb/%(title,fulltitle,alt_title)s%(season_number& |)s%(season_number&S|)s%(season_number|)02d%(episode_number&E|)s%(episode_number|)02d%(height& |)s%(height|)s%(height&p|)s%(fps|)s%(fps&fps|)s%(tbr& |)s%(tbr|)d.%(ext)s"}
         elif not options:
             self.opts['outtmpl'] = {'default': f"{path}/{self.name}",
-                                    'thumbnail': f"{path}/yt-dlp-thumb/%(title,fulltitle,alt_title)s%(season_number& |)s%(season_number&S|)s%(season_number|)02d%(episode_number&E|)s%(episode_number|)02d%(height& |)s%(height|)s%(height&p|)s%(fps|)s%(fps&fps|)s%(tbr& |)s%(tbr|)d.%(ext)s"}
+                                    'thumbnail': f"{path}/yt-dlp-thumb/{base_name}.%(ext)s"}
         else:
-            pure_name = ospath.splitext(self.name)[0]
-            self.opts['outtmpl'] = {'default': f"{path}/{pure_name}/%(title,fulltitle,alt_title)s%(season_number& |)s%(season_number&S|)s%(season_number|)02d%(episode_number&E|)s%(episode_number|)02d%(height& |)s%(height|)s%(height&p|)s%(fps|)s%(fps&fps|)s%(tbr& |)s%(tbr|)d.%(ext)s",
-                                    'thumbnail': f"{path}/yt-dlp-thumb/%(title,fulltitle,alt_title)s%(season_number& |)s%(season_number&S|)s%(season_number|)02d%(episode_number&E|)s%(episode_number|)02d%(height& |)s%(height|)s%(height&p|)s%(fps|)s%(fps&fps|)s%(tbr& |)s%(tbr|)d.%(ext)s"}
-            self.name = pure_name
+            self.opts['outtmpl'] = {'default': f"{path}/{base_name}/{self.name}",
+                                    'thumbnail': f"{path}/yt-dlp-thumb/{base_name}.%(ext)s"}
+            self.name = base_name
 
         if self.__listener.isLeech:
             self.opts['postprocessors'].append({'format': 'jpg', 'key': 'FFmpegThumbnailsConvertor', 'when': 'before_dl'})
@@ -225,7 +236,6 @@ class YoutubeDLHelper:
             self.opts['postprocessors'].append({'already_have_thumbnail': self.__listener.isLeech, 'key': 'EmbedThumbnail'})
         elif not self.__listener.isLeech:
             self.opts['writethumbnail'] = False
-
 
         msg, button = await stop_duplicate_check(name, self.__listener)
         if msg:
@@ -242,7 +252,7 @@ class YoutubeDLHelper:
             async with download_dict_lock:
                 if self.__listener.uid not in download_dict:
                     return
-            LOGGER.info(f'Start Queued Download with YT_DLP: {self.name}')
+            LOGGER.info(f'Start Queued Download from YT_DLP: {self.name}')
             await self.__onDownloadStart(True)
         else:
             LOGGER.info(f'Download with YT_DLP: {self.name}')
@@ -261,11 +271,7 @@ class YoutubeDLHelper:
     def __set_options(self, options):
         options = options.split('|')
         for opt in options:
-            kv = opt.split(':', 1)
-            key = kv[0].strip()
-            if key == 'format':
-                continue
-            value = kv[1].strip()
+            key, value = map(str.strip, opt.split(':', 1))
             if value.startswith('^'):
                 value = float(value.split('^')[1])
             elif value.lower() == 'true':
@@ -277,8 +283,7 @@ class YoutubeDLHelper:
 
             if key == 'postprocessors':
                 if isinstance(value, list):
-                    values = tuple(value)
-                    self.opts[key].extend(values)
+                    self.opts[key].extend(tuple(value))
                 elif isinstance(value, dict):
                     self.opts[key].append(value)
             else:
