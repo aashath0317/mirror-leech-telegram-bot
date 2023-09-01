@@ -2,9 +2,11 @@
 from asyncio import sleep
 from pyrogram.errors import FloodWait
 from time import time
+from re import match as re_match
 
 from bot import config_dict, LOGGER, status_reply_dict, status_reply_dict_lock, Interval, bot, user, download_dict_lock
 from bot.helper.ext_utils.bot_utils import get_readable_message, setInterval, sync_to_async
+from bot.helper.ext_utils.exceptions import TgLinkException
 
 
 async def sendMessage(message, text, buttons=None):
@@ -47,10 +49,10 @@ async def sendFile(message, file, caption=None):
 async def sendRss(text):
     try:
         if user:
-            return await user.send_message(chat_id=config_dict['RSS_CHAT_ID'], text=text, disable_web_page_preview=True,
+            return await user.send_message(chat_id=config_dict['RSS_CHAT'], text=text, disable_web_page_preview=True,
                                            disable_notification=True)
         else:
-            return await bot.send_message(chat_id=config_dict['RSS_CHAT_ID'], text=text, disable_web_page_preview=True,
+            return await bot.send_message(chat_id=config_dict['RSS_CHAT'], text=text, disable_web_page_preview=True,
                                           disable_notification=True)
     except FloodWait as f:
         LOGGER.warning(str(f))
@@ -85,6 +87,52 @@ async def delete_all_messages():
                 await deleteMessage(data[0])
             except Exception as e:
                 LOGGER.error(str(e))
+
+
+async def get_tg_link_content(link):
+    message = None
+    if link.startswith('https://t.me/'):
+        private = False
+        msg = re_match(
+            r"https:\/\/t\.me\/(?:c\/)?([^\/]+)(?:\/[^\/]+)?\/([0-9]+)", link)
+    else:
+        private = True
+        msg = re_match(
+            r"tg:\/\/openmessage\?user_id=([0-9]+)&message_id=([0-9]+)", link)
+        if not user:
+            raise TgLinkException(
+                'USER_SESSION_STRING required for this private link!')
+
+    chat = msg.group(1)
+    msg_id = int(msg.group(2))
+    if chat.isdigit():
+        chat = int(chat) if private else int(f'-100{chat}')
+
+    if not private:
+        try:
+            message = await bot.get_messages(chat_id=chat, message_ids=msg_id)
+            if message.empty:
+                private = True
+        except Exception as e:
+            private = True
+            if not user:
+                raise e
+
+    if private and user:
+        try:
+            user_message = await user.get_messages(chat_id=chat, message_ids=msg_id)
+        except Exception as e:
+            raise TgLinkException(
+                f"You don't have access to this chat!. ERROR: {e}") from e
+        if not user_message.empty:
+            return user_message, 'user'
+        else:
+            raise TgLinkException("Private: Please report!")
+    elif not private:
+        return message, 'bot'
+    else:
+        raise TgLinkException(
+            "Bot can't download from GROUPS without joining!")
 
 
 async def update_all_messages(force=False):
