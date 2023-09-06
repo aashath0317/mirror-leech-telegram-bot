@@ -17,12 +17,8 @@ async def add_direct_download(details, path, listener, foldername):
         await sendMessage(listener.message, 'There is nothing to download!')
         return
     size = details['total_size']
-    if len(contents) == 1:
-        if foldername:
-            contents[0]['filename'] = foldername
-        foldername = contents[0]['filename']
-        contents[0]['path'] = ''
-    elif foldername:
+
+    if foldername:
         path = f'{path}/{foldername}'
 
     if not foldername:
