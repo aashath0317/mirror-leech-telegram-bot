@@ -11,7 +11,7 @@ AUTHORIZED_CHATS = ""
 SUDO_USERS = ""
 DATABASE_URL = ""
 STATUS_LIMIT = 4
-DEFAULT_UPLOAD = "gd"
+DEFAULT_UPLOAD = "rc"
 STATUS_UPDATE_INTERVAL = 15
 FILELION_API = ""
 STREAMWISH_API = ""
@@ -29,10 +29,10 @@ IS_TEAM_DRIVE = False
 STOP_DUPLICATE = False
 INDEX_URL = "https://mydrive.akeelaasath.workers.dev/0:/"
 # Rclone
-RCLONE_PATH = ""
+RCLONE_PATH = "gdrive/ForDown"
 RCLONE_FLAGS = ""
-RCLONE_SERVE_URL = ""
-RCLONE_SERVE_PORT = 0
+RCLONE_SERVE_URL = "http://contabo21.ddns.net"
+RCLONE_SERVE_PORT = 
 RCLONE_SERVE_USER = ""
 RCLONE_SERVE_PASS = ""
 # JDownloader
