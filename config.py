@@ -3,6 +3,7 @@ BOT_TOKEN = "5070538922:AAEZN9f8thYfkepwqlot9qt97--iR6h_10c"
 OWNER_ID = 1273430546
 TELEGRAM_API = 3030128
 TELEGRAM_HASH = "cfc3885f5d2cbdbc5f10e6a643de2711"
+
 # OPTIONAL CONFIG
 TG_PROXY = {}
 USER_SESSION_STRING = "BQAuPHAAa-WQboMOujqTQ03Az19ke4Dil-6DS6GIITH1ep1zK-LhVkk7TtiTscSz24aEkRDOQZLwIN_k7aRw4cr8lSFSnyM3Oo-hgao2vUIqBJHUaD8ftSsBPfuydsxOQ8n2zXOgPlyqz24h8SzefduqvONPDZZIkscOPst3sV6HB1MgZM8N-qBLjt0Czq7xdO9HZ-Nxa15FMbkeROhNGga9LOI-BXGl6UatzeARz8FT-eFVyTXsZ9qnZN0V72GQuyK4xunJ8Tf6kTYSCM2kPul6Km-CSdPvnb6JCkBXfXlXBIHmhFu_XMEzAk1x7D3hNC4tM-cP--LA0QMd77Y0COJ-Lt0z3AAAAAEuOkiqAQ"
@@ -29,9 +30,9 @@ IS_TEAM_DRIVE = False
 STOP_DUPLICATE = False
 INDEX_URL = "https://mydrive.akeelaasath.workers.dev/0:/"
 # Rclone
-RCLONE_PATH = "gdrive/ForDown"
+RCLONE_PATH = "gdrive"
 RCLONE_FLAGS = ""
-RCLONE_SERVE_URL = "http://contabo21.ddns.net"
+RCLONE_SERVE_URL = ""
 RCLONE_SERVE_PORT = 0
 RCLONE_SERVE_USER = ""
 RCLONE_SERVE_PASS = ""
@@ -107,3 +108,5 @@ SEARCH_PLUGINS = [
     "https://raw.githubusercontent.com/msagca/qbittorrent_plugins/main/uniondht.py",
     "https://raw.githubusercontent.com/khensolomon/leyts/master/yts.py",
 ]
+
+
